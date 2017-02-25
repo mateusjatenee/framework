@@ -1227,6 +1227,28 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
     }
 
     /**
+     * Executes the callback if the condition is true or applies the
+     * default callback if it is given.
+     * 
+     * @param  bool $condition
+     * @param  \Closure $callback
+     * @param  \Closure $default
+     * @return \Illuminate\Support\Collection
+     */
+    public function when($condition, $callback, $default = null)
+    {
+        $collection = $this;
+
+        if ($condition) {
+            $collection = call_user_func($callback, $collection);
+        } elseif ($default) {
+            $collection = call_user_func($default, $collection);
+        }
+
+        return $collection;
+    }
+
+    /**
      * Reset the keys on the underlying array.
      *
      * @return static

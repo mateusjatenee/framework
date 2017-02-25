@@ -389,6 +389,47 @@ class SupportCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertEquals([['v' => 1], ['v' => 3]], $c->whereInStrict('v', [1, 3])->values()->all());
     }
 
+    public function testWhenCallback()
+    {
+        $callback = function ($collection) {
+            return $collection->where('name', 'John');
+        };
+
+        $data = new Collection([
+                [
+                    'name' => 'John'
+                ],
+                [
+                    'name' => 'Not John'
+                ]
+        ]);
+
+        $this->assertEquals($data->where('name', 'John'), $data->when(true, $callback));
+        $this->assertEquals($data, $data->when(false, $callback));
+    }
+
+    public function testWhenDefaultCallback()
+    {
+        $callback = function ($collection) {
+            return $collection->where('name', 'John');
+        };
+
+        $default_callback = function ($collection) {
+            return $collection->where('name', 'Not John');
+        };
+
+        $data = new Collection([
+                [
+                    'name' => 'John'
+                ],
+                [
+                    'name' => 'Not John'
+                ]
+        ]);
+
+        $this->assertEquals($data->where('name', 'Not John'), $data->when(false, $callback, $default_callback));
+    }
+
     public function testValues()
     {
         $c = new Collection([['id' => 1, 'name' => 'Hello'], ['id' => 2, 'name' => 'World']]);
