@@ -6,7 +6,9 @@ use Closure;
 use Illuminate\Contracts\Bus\QueueingDispatcher;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Queue\Queue;
+use Illuminate\Contracts\Queue\RunsWithinTransaction;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\DatabaseManager;
 use Illuminate\Foundation\Bus\PendingChain;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Queue\InteractsWithQueue;
@@ -129,7 +131,13 @@ class Dispatcher implements QueueingDispatcher
             };
         }
 
-        return $this->pipeline->send($command)->through($this->pipes)->then($callback);
+        $executionCallback = $command instanceof RunsWithinTransaction
+            ? fn() => $this->container->make(DatabaseManager::class)
+                ->connection($command->databaseConnection ?? null)
+                ->transaction(fn() => $callback($command))
+            : fn() => $callback($command);
+
+        return $this->pipeline->send($command)->through($this->pipes)->then($executionCallback);
     }
 
     /**
