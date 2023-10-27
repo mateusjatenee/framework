@@ -2,8 +2,11 @@
 
 namespace Illuminate\Tests\Integration\Events;
 
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\DatabaseTransactionsManager;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Mockery as m;
 use Orchestra\Testbench\TestCase;
 
@@ -48,6 +51,23 @@ class ListenerTest extends TestCase
 
         $this->assertFalse(ListenerTestListenerAfterCommit::$ran);
     }
+
+    public function testQueuedListenerRespectsTransactions()
+    {
+        Event::listen(ListenerTestEvent::class, QueuedListenerTestListenerAfterCommit::class);
+
+        try {
+            DB::transaction(function () {
+                Event::dispatch(new ListenerTestEvent);
+
+                throw new \Exception;
+            });
+        } catch (\Exception) {
+
+        }
+
+        $this->assertFalse(QueuedListenerTestListenerAfterCommit::$ran);
+    }
 }
 
 class ListenerTestEvent
@@ -66,6 +86,18 @@ class ListenerTestListener
 }
 
 class ListenerTestListenerAfterCommit
+{
+    public static $ran = false;
+
+    public $afterCommit = true;
+
+    public function handle()
+    {
+        static::$ran = true;
+    }
+}
+
+class QueuedListenerTestListenerAfterCommit implements ShouldQueue
 {
     public static $ran = false;
 
