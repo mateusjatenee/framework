@@ -14,6 +14,17 @@ interface Dispatcher
     public function listen($events, $listener = null);
 
     /**
+     * Register an event listener for the duration of the callback.
+     *
+     * @template T
+     * @param  \Closure(): T $callback
+     * @param  \Closure|string|array  $events
+     * @param  \Closure|string|array|null  $listener
+     * @return T
+     */
+    public function listenDuring($callback, $events, $listener = null);
+
+    /**
      * Determine if a given event has listeners.
      *
      * @param  string  $eventName

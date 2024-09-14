@@ -77,6 +77,20 @@ class NullDispatcher implements DispatcherContract
     }
 
     /**
+     * Register an event listener for the duration of the callback.
+     *
+     * @template T
+     * @param  \Closure(): T $callback
+     * @param  \Closure|string|array  $events
+     * @param  \Closure|string|array|null  $listener
+     * @return T
+     */
+    public function listenDuring($callback, $events, $listener = null)
+    {
+        return $this->dispatcher->listenDuring($callback, $events, $listener);
+    }
+
+    /**
      * Determine if a given event has listeners.
      *
      * @param  string  $eventName

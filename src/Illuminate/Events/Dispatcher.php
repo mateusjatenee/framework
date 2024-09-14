@@ -110,6 +110,45 @@ class Dispatcher implements DispatcherContract
     }
 
     /**
+     * Register an event listener for the duration of the callback.
+     *
+     * @template T
+     * @param  \Closure(): T $callback
+     * @param  \Closure|string|array  $events
+     * @param  \Closure|string|array|null  $listener
+     * @return T
+     */
+    public function listenDuring($callback, $events, $listener = null)
+    {
+        $eventNames = match (true) {
+            $events instanceof Closure => $this->firstClosureParameterTypes($events),
+            $events instanceof QueuedClosure => $this->firstClosureParameterTypes($events->closure),
+            default => (array) $events,
+        };
+
+        $this->listen($events, $listener);
+
+        try {
+            $result = $callback();
+        } finally {
+            foreach ($eventNames as $eventName) {
+                $this->forgetLastListener($eventName);
+            }
+        }
+
+        return $result;
+    }
+
+    protected function forgetLastListener($eventName)
+    {
+        if (str_contains($eventName, '*')) {
+            array_pop($this->wildcards[$eventName]);
+        } else {
+            array_pop($this->listeners[$eventName]);
+        }
+    }
+
+    /**
      * Setup a wildcard listener callback.
      *
      * @param  string  $event
