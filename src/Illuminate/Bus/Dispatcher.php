@@ -127,7 +127,11 @@ class Dispatcher implements QueueingDispatcher
             };
         }
 
-        return $this->pipeline->send($command)->through($this->pipes)->then($callback);
+        $pipeline = $this->pipeline->send($command)->through($this->pipes);
+
+        $this->pipes = [];
+
+        return $pipeline->then($callback);
     }
 
     /**

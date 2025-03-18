@@ -111,6 +111,31 @@ class BusDispatcherTest extends TestCase
 
         $dispatcher->dispatch($job);
     }
+
+    public function testPipesClearedAfterDispatch()
+    {
+        $container = new Container;
+        $dispatcher = new Dispatcher($container);
+
+        $command = new BusDispatcherBasicCommand;
+
+        $piped = false;
+        $middleware = function ($command, $next) use (&$piped) {
+            $piped = true;
+
+            return $next($command);
+        };
+
+        // First command should run through the pipe
+        $dispatcher->pipeThrough([$middleware])->dispatch($command);
+        $this->assertTrue($piped);
+
+        // Reset the flag and dispatch again - middleware should not run
+        $piped = false;
+        $dispatcher->dispatch($command);
+
+        $this->assertFalse($piped);
+    }
 }
 
 class BusInjectionStub
