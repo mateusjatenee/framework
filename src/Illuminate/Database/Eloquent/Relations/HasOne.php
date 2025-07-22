@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\Concerns\CanBeOneOfMany;
 use Illuminate\Database\Eloquent\Relations\Concerns\ComparesRelatedModels;
 use Illuminate\Database\Eloquent\Relations\Concerns\SupportsDefaultModels;
 use Illuminate\Database\Query\JoinClause;
+use function call_user_func;
 
 /**
  * @template TRelatedModel of \Illuminate\Database\Eloquent\Model
@@ -103,6 +104,23 @@ class HasOne extends HasOneOrMany implements SupportsPartialRelations
             $instance->setAttribute($this->getForeignKeyName(), $parent->{$this->localKey});
             $this->applyInverseRelationToModel($instance, $parent);
         });
+    }
+
+    /**
+     * Add a constraint to the query that will be used for the subquery.
+     *
+     * @param  callable  $callback
+     * @return $this
+     */
+    public function subQuery(callable $callback)
+    {
+        if (! $this->isOneOfMany()) {
+            throw new \LogicException('Subquery can only be used on one of many relationships.');
+        }
+
+        $callback($this->oneOfManySubQuery);
+
+        return $this;
     }
 
     /**

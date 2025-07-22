@@ -514,6 +514,30 @@ class DatabaseEloquentHasOneOfManyTest extends TestCase
         $this->assertSame($user->latest_updated_latest_created_state->id, $expectedState->id);
     }
 
+    public function testConstraintsAreAppliedToInnerQuery()
+    {
+       $user = HasOneOfManyTestUser::create();
+
+        $user->states()->create([
+            'type' => 'foo',
+            'state' => 'draft',
+        ]);
+
+        $desiredState = $user->states()->create([
+            'type' => 'bar',
+            'state' => 'draft',
+        ]);
+
+        $user->states()->create([
+            'type' => 'foo',
+            'state' => 'draft',
+        ]);
+
+        $result = $user->latest_state()->subQuery(fn ($q) => $q->where('type', 'bar'))->first();
+
+        $this->assertTrue($result->is($desiredState));
+    }
+
     /**
      * Get a database connection instance.
      *
@@ -593,6 +617,11 @@ class HasOneOfManyTestUser extends Eloquent
     public function states()
     {
         return $this->hasMany(HasOneOfManyTestState::class, 'user_id');
+    }
+
+    public function latest_state()
+    {
+        return $this->hasOne(HasOneOfManyTestState::class, 'user_id')->ofMany();
     }
 
     public function foo_state()
