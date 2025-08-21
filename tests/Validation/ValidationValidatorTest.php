@@ -9284,6 +9284,32 @@ class ValidationValidatorTest extends TestCase
         $this->assertSame(['users' => [['name' => 'Mohamed']]], $validator->validated());
     }
 
+    public function testValidatedExcludesUnvalidatedArrayKeysWhenParentHasEmptyRules(): void
+    {
+        $validator = new Validator(
+            $this->getIlluminateArrayTranslator(),
+            [
+                'items' => [
+                    [
+                        'name' => 'test',
+                        'type' => 'worker',
+                        'extra_field' => 'should_be_removed',
+                    ],
+                ],
+            ],
+            [
+                'items' => [],
+                'items.*.name' => ['required', 'string'],
+                'items.*.type' => ['required', 'string'],
+            ],
+        );
+
+        $validator->excludeUnvalidatedArrayKeys = true;
+
+        $this->assertTrue($validator->passes());
+        $this->assertSame(['items' => [['name' => 'test', 'type' => 'worker']]], $validator->validated());
+    }
+
     public function testExcludeUnless()
     {
         $validator = new Validator(
